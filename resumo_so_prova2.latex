@@ -1,0 +1,57 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{comment} 
+
+\setlength{\parindent}{4em}
+\setlength{\parskip}{1em}
+\renewcommand{\baselinestretch}{1.2}
+
+\title{Resumo Prova 2 SO}
+\author{Guilherme Christopher Michaelsen Cardoso \thanks{baseado no livrão do Tanenbaum}}
+\date{\today}
+
+\begin{document}
+\begin{titlepage}
+    \maketitle
+\end{titlepage}
+\section{Resum\~ao de SO (Prova 2)} 
+\subsection{Espa\c{c}os de endere\c{c}amento}
+\large{Expor mem\'oria f\'isica para processos tem diveras desvantagens:}
+\begin{itemize}
+    \item Permitir que programas de usu\'ario enderecem qualquer byte de mem\'oria
+        torna poss\'ivel quebrar o sistema operacional.
+    \item Com esse modelo, \'e dificil ter v\'arios programas rodando ao mesmo tempo.
+\end{itemize}
+\subsubsection{No\c{c}\~ao de espa\c{c}o de endere\c{c}amento}
+\'E necess\'ario resolver dois problemas antes de permitir m\'ultiplas aplica\c{c}\~oes em 
+mem\'oria ao mesmo tempo: prote\c{c}\~ao e relocação.
+
+\begin{itemize}
+    \item Espaço de Endereçamento:
+        \begin{itemize}
+            \item Conjunto de endereços que um processo pode usar para endereçar memória.
+            \item Cada processo tem seu próprio espaço de endereçamento, independente dos outros
+                processos (exceto em circunstâncias especiais onde processos querem compartilhar
+                seus espaços de endereçamento).
+        \end{itemize}
+\end{itemize}
+\subsection{Memória Virtual}
+\begin{itemize}
+    \item Enquanto a capacidade das memórias cresce rapidamente, o tamanho dos programas cresce 
+        ainda mais rápido.
+    \item Necessidade de rodar programas que são grandes demais para caber em memória
+    \item Swapping não é uma alternativa desejável, devido à lentidão dos discos rígidos.
+    \item \textbf{Memória virtual} foi a solução encontrada para esse problema.
+        \begin{itemize}
+            \item Cada programa tem seu pŕoprio espaço de endereçamento, que é dividido
+                em partes chamadas \textif{páginas}.
+            \item Cada página é um intervalo contíguo de endereços, que são mapeados em
+                memória física.
+            \item Nem todas as páginas precisam estar em memória física ao mesmo tempo para 
+                rodar o programa.
+                \item Quando o 
+        \end{itemize}
+\end{itemize}
+\end{document}
