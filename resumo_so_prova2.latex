@@ -46,7 +46,7 @@ mem\'oria ao mesmo tempo: prote\c{c}\~ao e relocação.
     \item \textbf{Memória virtual} foi a solução encontrada para esse problema.
         \begin{itemize}
             \item Cada programa tem seu pŕoprio espaço de endereçamento, que é dividido
-                em partes chamadas \textif{páginas}.
+                em partes chamadas \textbf{páginas}.
             \item Cada página é um intervalo contíguo de endereços, que são mapeados em
                 memória física.
             \item Nem todas as páginas precisam estar em memória física ao mesmo tempo para 
