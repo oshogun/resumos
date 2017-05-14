@@ -51,7 +51,80 @@ mem\'oria ao mesmo tempo: prote\c{c}\~ao e relocação.
                 memória física.
             \item Nem todas as páginas precisam estar em memória física ao mesmo tempo para 
                 rodar o programa.
-                \item Quando o 
+            \item Quando o programa referencia uma parte do endereço que já está
+                em memória física, o hardware realiza o mapeamento necessário na hora.
+            \item Quando o programa referencia uma parte do espaço de endereçamento 
+                que não está em memória, o SO recebe um aviso para buscar a página
+                faltante e reexecutar a instruçao que falhou.
+            \item Funciona muito bem em sistemas multiprogramados com pedaços de vários
+                programas na memória ao mesmo tempo. Quando um programa está esperando
+                uma página ser buscada do disco, a CPU pode ser concedida a outro
+                processo.
         \end{itemize}
 \end{itemize}
+\subsubsection{Paginação}
+\begin{itemize}
+    \item A maioria dos sistemas de memória virtual usam \textbf{paginação}
+    \item Programas geram \textbf{endereços virtuais} de memória, formando o
+        \textbf{espaço de endereçamento virtual}.
+    \item Em sistemas com memória virtual, esses endereços não são enviados diretamente
+        ao barramento da memória. Ao invés disso, vão para uma \textbf{MMU (Memory 
+        Management Unit)}  que mapeia o endereço virtual em endereços de memória reais.
+    \item O espaço de endereçamento virtual consiste de unidades de tamanho fixo chamadas
+        \textbf{páginas}. AS unidades correspondentes em memória física são chamadas
+        de \textbf{molduras de página}. As páginas e molduras de página geralmente
+        tem o mesmo tamanho.
+    \item Supondo um sistema de memória com páginas de 4KB, 64KB de espaço de 
+        endereçamento virtual e 32KB de memória física, temos 16 páginas virtuais e
+        8 molduras de páginas. 
+    \item Sempre que se necessita buscar um item no disco, é necessário que a página
+        inteira seja buscada.
+    \item Vários processadores suportam múltiplos tamanhos de página que podem ser 
+        misturados pelo SO de acordo com a necessidade.
+        \begin{itemize}
+            \item Ex.: A arquitetura x86\_64 suporta páginas de 4KB, 2MB e 1GB, sendo
+                possível, por exemplo, utilizar páginas de 4KB para aplicações de
+                usuário e uma única página de 1GB para o kernel do SO.
+        \end{itemize}
+    \item Exemplo: Supondo páginas de 4KB, 64KB de espaço de endereçamento virtual
+        e 32KB de memória física. Um programa solicita um dado que está no endereço 
+        virtual 0. Supondo que a página que contém os endereços 0 a 4095 está 
+        mapeada na moldura de página numero 2. Qual o endereço de memória real que 
+        será emitido pela MMU?
+        \begin{itemize}
+            \item A moldura 0 contém os endereços 0 a 4095. A moldura 1 contém os 
+                endereços 4096 à 8191. Logo, a moldura 2 começa no endereço 
+                8192 e vai até 12287. Portanto, o endereço físico que será
+                emitido será 8192.
+        \end{itemize}
+    \item Exemplo 2: O endereço virtual 20500 é 20 bytes à partir do começo
+        da página virtual 5 (endereços virtuais 20480 a 24575). Supondo que
+        essa página seja mapeada para a moldura de página número 3 (12k-16k),
+        o endereço físico emitido pela MMU será 12288 + 20 = 12308.
+    \item Como existem mais páginas virtuais do que moldura física, é necessário
+        controlar quais páginas virtuais estão presentes em memória física.
+        Para isso, é usado um bit de controle (\textbf{bit presente/ausente}).
+    \item Caso o programa referencie um endereço não mapeado, a MMU detecta isso
+        e faz com que a CPU interrompa o sistema operacional. Essa interrupção
+        é chamada de \textbf{page fault}. O SO então escolhe uma moldura de memória
+        pouco usada, salva seu conteúdo no disco (caso já não esteja lá), e então
+        busca (também do disco) a página que acabou de ser referenciada, colocando-a
+        na moldura de página que foi liberada, refaz o mapeamento, e reinicia a 
+        instrução interrompida.
+    \item Exemplo: supondo um endereço virtual 8196 (0010000000000100 em binário),
+        sendo mapeado pela MMU. Esse endereço virtual de 16 bits é dividido em
+        duas partes: um número de página (4 bits) e um offset (12 bits). Com 4
+        bits de offset, podemos endereçar \begin{math} 2^4 = 16\end{math} 
+        páginas, e com um offset de 12 bits, podemos endereçar todos os 
+        \begin{math}2^{12} = 4096 \end{math}bytes em uma página.
+        \item O número da página é usado como índice na \textbf{tabela de páginas},
+            representando o número da moldura de página correspondente àquela página
+            virtual. Se o bit \textit{presente/ausente} é 0, uma interrupção ao SO
+            é causada. Se é 1, o número da moldura de página encontrada na tabela
+            de páginas é copiado para os 3 bits mais significativos do registrador
+            destino, junto com o offset de 12 bits, que é copiado do endereço virtual.
+            Juntos, eles formam um endereço físico de 15 bits. Esse endereço é então
+            enviado ao barramento da memória como o endereço físico de memória. 
+\end{itemize}
+\subsubsection{Tabelas de página}
 \end{document}
