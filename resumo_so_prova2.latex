@@ -127,4 +127,126 @@ mem\'oria ao mesmo tempo: prote\c{c}\~ao e relocação.
             enviado ao barramento da memória como o endereço físico de memória. 
 \end{itemize}
 \subsubsection{Tabelas de página}
+\par Em uma implementação simples, o mapeamento de endereços virtuais em endereços físicos 
+pode ser feito da seguinte forma:
+\begin{itemize}
+    \item O endereço virtual é dividido em um número de página virtual (bits mais 
+        significativos) e um offset (bits menos significativos)
+        \begin{itemize}
+            \item Por exemplo, em um endereço de 16 bits com páginas de 4KB,
+                os 4 bits mais significativos especificam uma das 16 páginas virtuais
+                e os 12 bits menos significativos representam o byte offset dentro
+                da página selecionada.
+            \item É possível usar endereços menores ou maiores para indexar a página,
+                definindo tamanhos diferentes de páginas.
+        \end{itemize}
+    \item O número de página virtual é usado como índice na tabela de páginas para 
+        encontrar a entrada para essa página virtual. A partir da entrada na tabela
+        de páginas, o número da moldura de página (se existir), é encontrado.
+    \item O número da moldura de página é concatenado aos bits mais significativos
+    do offset, substituindo o número da página virtual, para formar um endereço
+    físico que pode ser enviado para a memória.
+\end{itemize}
+\par Portanto, o propósito da tabela de páginas é mapear páginas virutais em molduras
+de página. 
+
+\subsubsection{Estrutura de uma entrada na tabela de páginas}
+
+\par 
+\indent O layout exato de uma entrada na tabela de páginas é altamente dependente da
+máquina, mas a informaçao presente normalmente é a mesma.
+
+\begin{itemize}
+    \item O tamanho varia de computador a computador, mas 32 bits é um tamanho comum.
+    \item O campo mais importante é o o \textit{número da moldura de página}.
+    \item Em seguida, existe o bit \textit{presente/ausente}. Se esse bit for
+        1, a entrada é válida e pode ser usada, caso contrário, a página virtual
+        não está atualmente em memória. Acessar uma entrada na tabela de páginas
+        que tenha esse bit em 0 causa um page fault.
+    \item Os bits de proteção dizem quais tipos de acesso são permitidos. Na forma
+        mais simples, se tem apenas um bit, que permite apenas leitura se estiver em
+        0, e leitura ou escrita se estiver em 1. Uma alternativa é usar 3 bits,
+        um para leitura, um para escrita e um para execução.
+    \item Os bits \textit{modificado} e \textit{referenciado} controlam a utilização
+        da página. Quando ocorre uma escrita em uma página, o hardware seta o bit
+        \textit{modificado}. Esse bit é importante quando o SO decide usar aquela
+        moldura de página. Se a página tiver sido modificada (suja), ela deve ser
+        escrita novamente no disco. Se não, ela pode ser abandonada, já que a cópia
+        em disco ainda é válida. Esse bit normalmente é chamado de \textbf{dirty bit}.
+    \item O bit \textit{referenciado} é setado toda vez que uma página for referenciada,
+        tanto para leitura quanto para escrita. Seu valor é usado para ajudar o SO a 
+        escolher uma página quando ocorre um page fault. Páginas que não estão sendo
+        usadas são melhores candidatas a serem substituídas.
+    \item O último bit permite desabilitar o caching na página. Isso é importante para
+        páginas que mapeiam direto em registradores de dispositivos ao invés de memória. 
+        Se o sistema operacional estiver em loop esperando um dispositivo de I/O responder
+        um comando, ele precisa buscar constantemente a word do dispositivo, e não usar
+        uma cópia em cache desatualizada. Máquinas que não utilizam I/O mapeado em 
+        memória não precisam deste bit.
+\end{itemize}
+
+\subsection{Acelerando a Paginação}
+\par \indent Em qualquer sistema de paginação, dois problemas devem ser enfrentados:
+\begin{enumerate}
+    \item O mapeamento do endereço virtual para o endereço físico deve ser rápido.
+    \item Se o endereço virtual for grande, a tabela de páginas também será.
+\end{enumerate}
+\par O primeiro problema ocorre devido à natureza dos programas. A cada instrução
+executada, é necessário fazer mapeamento de endereços virtuais para físicos, já
+que todas as instruções são buscadas em memória e muitas delas também referenciam
+operandos em memória.
+\par O segundo problema ocorre porque todos so computadores modernos utilizam 
+endereços virtuais de 32 ou 64 bits. Usando páginas de  4KB, um endereço de 32 bits
+é capaz de referenciar 1 milhão de páginas, e um endereço de 64 bits referencia um 
+número absurdamente grande de páginas. Com 1 milhão de páginas no espaço de endereçamento
+virtual, a tabela de páginas deve ter 1 milhão de entradas, e cada processo precisa
+da sua própria tabela de páginas (por possuir seu próprio espaço de endereçamento).
+
+\subsubsection{Translation Lookaside Buffers (TLB)}
+\par \indent A maioria das técnicas de otimização de paginamento parte do princípio que
+a tabela de páginas está em memória. Se uma instrução copia um registrador para outro,
+por exemplo, em um sistema sem paginação, ela faz apenas uma referência à memória 
+(para buscar a instrução em si). Com paginamento, pelo menos uma referência a mais
+é necessária, para acessar a tabela de páginas. Devido ao impacto dos acessos de 
+memória na performance da CPU, dobrar o número de acessos à memória diminui potencialmente
+pela metade o desempenho.
+    \par
+\indent Baseado na observação de que a maioria dos programas tende a fazer um grande 
+número de referências a um número pequeno de páginas, foi-se possível desenvolver uma 
+solução para esse problema.
+\begin{itemize}
+    \item Essa solução consiste em equipar computadores com um componente em hardware
+        que é capaz de mapear endereços virtuais em endereços físicos sem precisar
+        acessar a tabela de páginas. Esse dispositivo é chamado de \textbf{TLB} 
+        (Translation Lookaside Buffer).
+    \item Esse dispositivo normalmente faz parte da MMU e consiste de uma tabela
+        com um pequeno número de entradas, por exemplo, 8 (raramente mais do que 
+        256). Cada entrada contém informação sobre uma página, incluindo o número
+        da página virtual, um bit que indica se a página foi modificada, o código
+        de proteção (permissões read/write/execute), e o número da moldura de página
+        física na qual a página está localizada. Esses campos possuem correspondência
+        1 para 1 com os campos na tabela de páginas, exceto pelo número da página virtual,
+        que não é usado pela tabela de páginas. Outro bit indica se a entrada é válida
+        ou não.
+    \item Quando um endereço virtual é enviado à MMU para tradução, o hardware primeiro
+        checa para ver se é um número de página virtual presente na TLB comparando 
+        esse endereço paralelamente com todas as entradas na TLB. Se um cnadidato válido
+        é encontrado e o acesso não viola os bits de proteção, a moldura de página é
+        buscada diretamente do TLB, sem necessitar acessar a tabela de páginas.
+    \item Se o número de página virtual está presente na TLB, mas a instrução está
+        tentando escrever em uma página protegida contra escrita, uma protection 
+        fault é gerada.
+    \item Quando um número de página virtual não está no TLB, a MMU detecta o miss 
+        e faz uma busca na tabela de páginas. Ela então remove uma das entradas
+        do TLB e substitui com a entrada na tabela de páginas que acabou de encontrar.
+        Se essa página for usada novamente em breve, ela será encontrada no TLB. 
+    \item Quando uma entrada é removida do TLB, o bit de modificado é copiado de volta
+        para a entrada da tabela de páginas em memória. Os outros valores já estão lá,
+        exceto o bit de referência. Quando o TLB é carregado da tabela de páginas, todos
+        os campos são buscados em memória.
+\end{itemize}
+
+\subsubsection{Gerenciamento de TLB por software}
+
+
 \end{document}
