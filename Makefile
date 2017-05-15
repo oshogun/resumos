@@ -1,4 +1,4 @@
 all:
-	pdflatex *.latex
+	pdflatex *.tex
 clean:
 	rm *.aux *.log *.pdf
