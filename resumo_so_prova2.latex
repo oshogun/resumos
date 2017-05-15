@@ -3,7 +3,13 @@
 \usepackage[T1]{fontenc}
 \usepackage[brazilian]{babel}
 \usepackage{comment} 
-
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+ }
 \setlength{\parindent}{4em}
 \setlength{\parskip}{1em}
 \renewcommand{\baselinestretch}{1.2}
@@ -247,6 +253,190 @@ solução para esse problema.
 \end{itemize}
 
 \subsubsection{Gerenciamento de TLB por software}
+
+\par\indent Até agora, assumiu-se que todas as máquinas com memória virtual paginada 
+possuem tabelas de páginareconhecidas pelo hardware, mais um TLB. Nesse tipo de projeto, 
+o gerenciamento do TLB e das faltas de TLB são feitos inteiramente pela MMU. 
+Traps para o SO ocorrem apenas quando uma página não está presente em memória. 
+
+\par Porém, muitas máquinas RISC fazem todo o gerenciamento de páginas em software. 
+Nessas máquinas, entradas na TLB são carregadas explicitamente pelo SO.
+
+\begin{itemize}
+    \item Quando um miss no TLB ocorre, ao invés da MMU buscar a referência necessária
+        na tabela de páginas, ele apenas gera uma faulta de TLB e lança o problema para
+        o SO. O sistema então deve encontrar a página, remover uma entrada do TLB, inserir
+        a nova entrada, e reiniciar a instrução faltante. Como misses de TLB são mais comuns
+        do que page faults, esse processo deve ser rápido.
+    \item Se o TLB for razoavelmente grande para reduzir a miss rate, o gerenciamento por software
+        de TLB se torna aceitavelmente eficiente. 
+    \item Vantagem: MMU muito mais simples, liberando espaço no chip da CPU para caches e outros
+        componentes que possam melhorar a performance.
+\end{itemize}
+\par Várias estratégias foram desenvolvidas para melhorar o desempenho em máquinas que gerenciam
+TLB por software. 
+
+\begin{itemize}
+    \item Uma forma é buscar reduzir tanto os misses de TLB quanto o custo de um miss na TLB quando
+        eles ocorrem. 
+    \item Para reduzir misses no TLB, o sistema operacional pode usar sua intuição para descobrir
+        quais páginas tendem mais a serem usadas logo e carregar suas entradas na TLB. 
+    \item A forma normal de processar um miss de TLB, tanto em hardware quanto em software, 
+        é buscar na tabela de páginas a página referenciada. O problema de se fazer essa
+        busca em software é que as páginas que contém a tabela de páginas podem não estar
+        no TLB, o que causa faltas adicionais no TLB durante o processamento. Essas faltas
+        podem ser reduzidas mantendo um grande cache em software de entradas na TLB em uma 
+        localização fixa cuja página sempre seja mantida na TLB. Ao checar primeiro o cache
+        em sofware, o SO pode reduzir substancialmente as faltas na TLB.
+\end{itemize}
+
+\par Ao usar gerenciamento de TLB por software, é essencial entender a diferença entre diferentes tipos 
+de misses. Um \textbf{soft miss} ocorre quando a página referenciada não está na TLB, mas está em memória.
+Messe caso, tudo que é necessário é atualizar o TLB, sem necessidade de I/O no disco. Tipicamente, um
+soft miss leva de 10 a 20 instruções para ser tratado e pode ser completado em alguns nanosegundos.
+Em contraste, um \textbf{hard miss} ocorre quando a página em si não está em memória e nem na TLB.
+Um acesso a disco é necessário para buscar a página, que pode levar vários milisegundos, dependendo
+do disco sendo usado. Um hard miss é mais de 1 milhão de vezes mais lento do que um soft miss. 
+O processo de busca na hierarquia da tabela de páginas é chamado de \textbf{page table walk}.
+
+\par Os misses não são apenas soft ou hard. Por exemplo, se o page walk não encontrar o a página
+na tabela de páginas de um processo, resultando em uma page fault. Existem 3 possiblidades.
+\begin{enumerate}
+    \item A página pode estar em memória, mas não na tabela de páginas do processo. Por exemplo,
+        pode ter sido trazida do disco por outro processo. Nesse caso, não é necessário 
+        acessar o disco novamente, bastando mapear a página apropriadamente nas tabelas
+        de página. Esse tipo de soft miss'e chamado de \textbf{minor page fault.}
+    \item A página precisa ser trazida do disco. Este é o \textbf{major page fault}.
+    \item O programa simplesmente acessou um endereço inválido e não é necessário realizar
+        nenhum tipo de mapeamento no TLB. Nesse caso, o SO normalmente mata o programa
+        com um \textbf{segmentation fault}. Este é o único caso em que o programa fez
+        algo de errado. Os outros casos são automaticamente tratados pelo hardare e/ou
+        pelo SO.
+\end{enumerate}
+
+\subsection{Tabelas de página para memórias grandes}
+
+\subsubsection{Tabelas de página multinível}
+\begin{itemize}
+    \item Solução para lidar com espaços de endereçamento virtuais muito grandes.
+    \item Assumindo um endereço virtual de 32 bits que é particionado em um campo
+        PT1 de 10 bits, um campo PT2 de 10 bits e um campo Offset de 12 bits. 
+        Como offsets são de 12 bits, cada página tem 4KB, e existe um total de
+        \begin{math}2^{20}\end{math} delas. 
+    \item O segredo para o método de tabela de páginas multinível está em evitar
+        manter todas as tabelas de páginas em memória o tempo todo. As que não 
+        são necessárias, não devem ser mantidas.
+    \item O campo PT1 de 10 bits endereça a tabela de página top-level, com 1024 
+        entradas. Quando um endereço virtual é enviado para a MMU, ele extrai o
+        campo PT1 e usa ese valor como um índice na tabela de páginas top-level.
+        Cada uma dessas 1024 entradas na tabela de página representa 4M porque
+        o espaço de endereçamento vitual de 4GB (32bits) foi dividido em fatias
+        de 4096 bytes.
+    \item A entrada encontrada indexando a tabela de páginas top-level contém
+        o endereço ou o número da moldura de página de uma tabela de páginas
+        second-level. A entrada 0 da tabela top-level aponta para a tabela de páginas
+        da área de texto do programa, a entrada 1 para a tabela de páginas da área
+        de dados, e a entrada 1023 para a tabela de páginas da pilha. As outras 
+        entradas não são usadas.
+    \item O campo PT2 agora é usado como um índice na tabela de páginas de segundo
+        nível selecionada para encontrar o número da moldura de página da página
+        em si.
+    \item Exemplo: Considere o endereço virtual de 32 bits 0x00403004, que se refere
+        a 12,292 bytes dentro do segmento de dados. Esse endereço virtual corresponde
+        a PT1 = 1, PT2 = 3 e Offset = 4. A MMU usa PT1 para indexar a tabela top-level,
+        e obter a entrada 1, que corresponde aos endereços 4M a 8M -1. Ele então usa
+        a PT2 para indexar a tabela second-level que acabou de encontrar e extrair
+        a entrada 3, que corresponde aos endereços 12288 a 16383 dentro dessa fatia
+        de 4M. Essa entrada contém o número da moldura de página contendo o endereço
+        virtual 0x00403004. Se essa página não está presente em memória, o bit
+        \textit{presente/ausente} na tabela de páginas terá o valor zero, causando
+        um page fault. Se a página estiver presente em memória, o número da moldura
+        de página tirada da tabela de páginas second-level é combinado com o offset(4) 
+        para construir o endereço físico. Esse endereço é enviado ao barramento da memória.
+    \item É interessante notar que apesar de o espaço de endereçamento conter mais de um
+        milhão de páginas, apenas quatro tabelas de páginas são necessárias: a tabela
+        top level, e as tabelas second-level de 0 a 4M (para o segmento de texto), 
+        4M a 8M (para o segmento de dados) e os ultimos 4M (para a pilha). Os bits
+        \textit{presente/ausente} do resto das 1021 entradas da tabela de página 
+        top-leval são setados para 0, forçando um page fault se eles forem acessados.
+        Se isso ocorrer, o sistema operacional vai notificar que o processo está 
+        tentando referenciar memória que não deveria referenciar, e tomar uma 
+        ação apropriada, como enviar um sinal para matar o processo. 
+    \item Esse sistema de dois níveis de tabelas de páginas pode ser expandido
+        para um sistema de três, quatro ou mais níveis. Mais níveis provêm
+        mais flexibilidade. O processador Intel 80386, por exemplo, era capaz
+        de endereçar até 4GB de memória usando uma tabela de dois níveis que 
+        consistia de um \textbf{diretório de páginas} cujas entradas apontavam
+        para a tabela de páginas, que, por sua vez apontava para as molduras
+        de página de 4KB. Tanto o diretório de páginas quanto as tabelas de página
+        continham 1024 entradas, dando um total de 
+        \begin{math} 2^{10} * 2^{12} = 2^{32}\end{math} bytes endereçáveis, como
+        desejado.
+    \item 10 anos depois, o Pentium Pro introduziu outro nível: 
+        \textbf{tabela de ponteiros do diretório de páginas}. Além disso, 
+        extendeu cada entrada em cada nível da hierarquia da tabela de páginas 
+        de 32 para 64 bits, de forma a tornar possível acessar memória acima
+        do limite de 4GB. Como só possuía 4 entradas na tabela de ponteiros
+        do diretório de páginas, 512 em cada diretório de páginas e 512 em 
+        cada tabela de páginas, o total de memória que conseguia acessar ainda 
+        estava limitado a um máximo de 4GB. 
+    \item Quando um suporte apropriado de 64 bits foi adicionado à familia
+        x86 (originalmente pela AMD), foi adicionado mais um nível, o 
+        \textbf{page map level 4}. Todas as tabelas agora possuem 512 entradas,
+        tornando possível endereçar 
+        \begin{math}2^9 * 2^9 * 2^9 * 2^9 * 2^{12} = 2^{48}\end{math} bytes.
+        Ainda era possível adicionar mais um nível, mas provavelmente se atingiu
+        a conclusão de que 256TB são suficientes por um bom tempo.
+\end{itemize}
+
+\subsection{Algoritmos de substituição de páginas}
+    \par \indent Quando um page fault ocorre, o sistema operacional precisa escolher uma
+        página para remover da memória, liberando espaço para outras páginas.
+        Se a página que será removida foi modificada enquanto estava em memória,
+        ela deve ser reescrita no disco, para atualizar a cópia em disco. Se a página
+        não foi alterada, não é necessário reescrever nada. A página a ser lida apenas
+        substitui a página removida.
+
+\subsubsection{Algoritmo NRU: Not Recently Used}
+\begin{itemize}
+    \item A maioria dos computadores com memória virtual possuem dois bits de status:
+        R e M, associados a cada página. R é setado toda vez que a página é referenciada
+        (lida, ou escrita). M é setado toda vez que ocorre uma escrita na página (isto é,
+        ela é modificada). Os bits são contidos em cada entrada na tabela de páginas. É 
+        importante que esses bits sejam atualizados em todas as referências à memória, 
+        para que eles sejam setados pelo hardware. Quando um bit é setado para 1, ele
+        permanece em 1 até o SO resetá-lo.
+    \item Se o hardware não tiver esses bits, eles podem ser simulados usando os mecanismos
+        de page fault e de clock interrupt do sistema operacional. Quando um processo é 
+        iniciado, todas as suas tabelas de página são marcadas como não estando em memória.
+        Assim que qualquer página for referencia, um page fault ocorrerá. O sistema operacional
+        então seta o bit R (nas suas tabelas internas), muda a entrada da tabela de páginas para
+        apontar para a página correta em modo READ ONLY, e reinicia a instrução. Se a página for
+        subsequentemente modificada, outro page fault vai ocorrer, permitindo que o sistema operacional
+        sete o M bit e mude o modo da página para READ/WRITE.
+    \item Os bits R e M podem ser usados para implementar um algoritmo de paginação simples.
+        \begin{itemize}
+            \item Quando um processo é iniciado, ambos os bits para todas as páginas são setados
+                para 0 pelo SO. Periódicamente (e.g., em cada interrupção de clock), o bit R
+                é zerado, para distinguir páginas que não foram referenciadas recentemente das
+                que foram referenciadas. 
+            \item Quando um page fault ocorre, o SO inspeciona todas as páginas e as divide
+                em quatro categorias, baseadas nos valores atuais de seus bits R e M:
+                \begin{itemize}
+                    \item Classe 0: não referenciado, não modificado.
+                    \item Classe 1: não referenciado, modificado.
+                    \item Classe 2: referenciado, não modificado.
+                    \item Classe 3: referenciado, modificado.
+                \end{itemize}
+            \item O algoritmo \textbf{NRU (Not Recently Used)} remove uma página aleatória
+                da classe não-vazia de menor número. Implícita neste algoritmo está a idéia
+                de que é melhor remover uma página modificada que não tenha sido referenciada
+                em pelo menos um ciclo de clock, do que uma página limpa que está sendo muito
+                usada. A principal vantagem do NRU é que ele é simples de entender, moderadamente
+                eficiente de implementar e provê uma performance que, apesar de não ser ótima,
+                pode ser adequada.
+        \end{itemize}
+\end{itemize}
 
 
 \end{document}
