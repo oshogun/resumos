@@ -15,7 +15,8 @@
 \renewcommand{\baselinestretch}{1.2}
 
 \title{Resumo Prova 2 SO}
-\author{Guilherme Christopher Michaelsen Cardoso \thanks{baseado no livrão do Tanenbaum}}
+\author{Guilherme Christopher Michaelsen Cardoso
+\thanks{baseado no livrão do Tanenbaum, feito em \LaTeX}}
 \date{\today}
 
 \begin{document}
@@ -437,6 +438,269 @@ na tabela de páginas de um processo, resultando em uma page fault. Existem 3 po
                 pode ser adequada.
         \end{itemize}
 \end{itemize}
+\subsubsection{O algoritmo First In, First Out (FIFO)}
+\begin{itemize}
+    \item Outro algoritmo de paginação de baixo overhead é o \textbf{FIFO (First-In,
+        First-Out}. 
+    \item O sistema operacional mantem uma lista de todas as páginas atualmente 
+        em memória, seguindo a ordem de chegada (a mais recente no fim da fila
+        e a mais antiga no começo da fila). Em caso de page fault, a página no começo
+        da fila (isto é, a que está na fila a mais tempo) é removida, e a nova página
+        é inserida no fim da fila.
+    \item O problema deste algoritmo está no fato de que a primeira página da fila sempre
+        será removida, mesmo que ela seja frequentemente acessada. Por isso, FIFO em
+        sua forma pura raramente é utilizado.
+\end{itemize}
 
+\subsubsection{Algoritmo da Segunda Chance}
+\begin{itemize}
+    \item Uma modificação simples de FIFO que evita o problema de descartar uma página
+        que esteja sendo muito usada consiste em monitorar o R bit da página mais antiga.
+        Se o bit for 0, a página é antiga e não foi usada recentemente, então é substituída
+        imediatamente. Se o bit R for 1, esse bit é resetado e a página é colocada no fim
+        da fila, e seu tempo de carga é atualizado como se ela tivesse acabado de ser 
+        colocada em memória. Então, a busca continua.
+    \item Esse algoritmo é chamado de \textbf{segunda chance}.
+    \item O algoritmo procura em todas as páginas da fila até encontrar uma página que
+        esteja no começo da fila e que não tenha sido utilizada recentemente (R = 0).
+    \item Caso R seja 1, além de inserir a página no fim da fila, o bit é resetado. 
+        Isso garante que essa página não receba uma terceira chance, isso é, caso
+        nenhuma página com R = 0 seja encontrado, o algoritmo funcionará como uma FIFO
+        normal, garantindo que o algoritmo sempre termine.
+\end{itemize}
 
+\subsubsection{Algoritmo do relógio}
+\begin{itemize}
+    \item Apesar do algoritmo da segunda chance ser razoável, ele é desnecessariamente 
+        ineficiente, pois está constantimente movendo páginas dentro da lista. 
+    \item Uma abordagem melhor consiste em manter todas as molduras de página em uma 
+        lista circular, em forma de relógio. O ponteiro do relógio aponta para a página
+        mais antiga.
+    \item Quando um page fault ocorre, a página para a qual o ponteiro aponta é inspecionada.
+        Se seu bit R for igual a 0, a página é removida, a nova página é inserida no relógio
+        em seu lugar, e o ponteiro avança uma posição. Se R for 1, R é resetado e o ponteiro
+        passa apontar para a próxima página.
+    \item Esse processo é repetido até encontrar uma página com R = 0, Devido a essa natureza,
+        esse algoritmo recebe o nome de \textbf{algoritmo do relógio}.
+\end{itemize}
+\subsubsection{Algoritmo LRU (Least Recently Used)}
+\begin{itemize}
+    \item Páginas que foram muito usadas nas últimas instruções provavelmente serão usadas
+        novamente em breve \textbf{(princípio da localidade)}.
+    \item Da mesma forma, páginas que não foram usadas há um bom tempo, provavelmente não
+        serão usadas em breve. 
+    \item Essa idéia sugere um algoritmo: quando uma page fault ocorre, joga-se fora a página
+        que tenha estado inativa pelo maior tempo. Essa estratégia é chamada de paginação
+        \textbf{LRU (Least Recently Used)}.
+    \item Apesar de LRU ser implementável, não é um altoritmo barato. Para implementar um
+        LRU completo, é necessário manter uma lista encadeada de todas as páginas em memória,
+        com a página mais recentemente utilizada na frente e a página menos recentemente
+        utilizada no final. A dificuldade está no fato de que esta lista deve ser atualizada
+        toda vez que a memória é referenciada.
+    \item Encontrar uma página na lista, deletá-la, e então movê-la para frente é uma operação
+        que consome muito tempo, mesmo em hardware.
+\end{itemize}
+
+\subsubsection{Simulando LRU em Software}
+\begin{itemize}
+    \item \textbf{NFU (Not Frequently Used)}
+        \begin{itemize}
+            \item A cada pagina é associado um contador (inicialmente zerado).
+            \item A cada interrupção de clock, o SO escaneia todas as páginas em
+                memória. Para cada página, o bit R (que pode ser 0 ou 1) é adicionado ao 
+                contador. 
+            \item Os contadores mantém um certo controle sobre o quão frequentemente cada
+                página é referenciada.
+            \item Quando um page fault acontece, a página com o menor contador é escolhida
+                para ser substituída.
+            \item O maior problema do NFU é que esses contadores nunca são zerados, e por 
+                isso, caso uma página que tenha sido bastante utilizada pare de ser utilizada,
+                o valor do seu contador ainda poderá ser o maior de páginas que começaram a 
+                ser utilizadas agora.
+        \end{itemize}
+    \item \textbf{Aging}       
+        \begin{itemize}
+            \item Uma pequena modificação no NFU permite simular LRU de forma eficiente.
+            \item Primeiro, todos os contadores são deslocados à direita 1 bit antes do bit
+                R ser somado. Em seguida, o bit R é somado ao bit mais à esquerda, ao invés
+                do mais à direita.
+            \item Quando um page fault ocorre, a página com o menor contador é removida. 
+                Caso uma página não tenha sido referenciada por 4 ciclos de clock, ela 
+                terá 4 zeros à esquerda, e por isso, um valor de contador menor do que 
+                uma página que não foi referenciada por 3 ciclos de clock.
+        \end{itemize}
+
+\end{itemize}
+\subsubsection{Algoritmo Working Set}
+\begin{itemize}
+    \item Na forma mais pura de paginação, processos são iniciados sem nenhuma página
+        em memória.
+    \item Asim que a CPU tenta buscar a primeira instrução, ela encontra um page fault,
+        e precisa fazer o SO buscar a página contendo a primeira instrução. 
+    \item Outras páginas contendo variáveis globais e a pilha normalmente vem em seguida.
+    \item Depois de um tempo, o processo tem a maioria das páginas que precisa e se
+        estabiliza, rodando com um número relativamente pequeno de page faults. 
+    \item Essa estratégia é chamada de \textbf{demand paging}, porque páginas são
+        carrecadas apenas sob demanda, e não previamente.
+    \item É fácil escrever um programa de teste que leia todas as páginas de um 
+        grande espaço de endereçamento, causando tantos page faults que não haja
+        mais memória para segurar todos eles. Felizmente, processos não funcionam assim.
+    \item Processos exibem \textbf{localidade de referência}, que significa que durante 
+        qualquer etapa da execução, o processo referencia apenas uma fração de todas 
+        as páginas.
+    \item O conjunto de páginas que um processo atualmente está usando é seu 
+        \textbf{working set}. Se todo o working set está em memória, o processo irá
+        rodar sem causar muitos page faults até seguir para outra fase de execução.
+    \item Se a memória for pequena demais para armazenar todo o working set, o processo
+        irá causar muitos page faults e rodar devagar, já que executar uma instrução
+        exige alguns nanosegundos e ler uma página em disco tipicamente leva 10 msec.
+    \item Um programa que causa muitos page faults frequentes é dito \textbf{thrashing}.
+    \item Em sistemas multiprogramados, processos frequentemente são movidos para o disco
+        (i.e. todas as páginas removidas da memória) para entregar a CPU para outros.
+    \item Se, ao retomar a execução desse processo, for necessário causar page faults
+        até que todo o working set esteja novamente disponível em memória, isso causará
+        degradação no desempenho.
+    \item Por isso, muitos sistemas de paginação tentam manter controle sobre o working
+        set de cada processo, e ter certeza de que estará em memória antes de deixar o
+        processo rodar. Isso é chamado de \textbf{modelo do working set}, e é concebido
+        para diminuir a taxa de page faults. Carregar as páginas \textit{antes} de 
+        deixar o processo rodar também é chamado de prepaging.
+    \item Uma forma comum de se implementar uma aproximação de working set é usar o 
+        tempo de execução do processo. Por exemplo, podemos definir o working set
+        de um processo como sendo o conjunto de páginas usadas durante os ultimos
+        100 ms de tempo de execução. 
+    \item O único tempo de execução que nos intereça é o tempo de execução do processo,
+        e não o tempo de CPU total durante a execução do processo. Isso é, se um processo
+        começa a executar no instante T, e teve 40ms de tempo de CPU ao final de T + 100ms,
+        para fins de escolha de working set, seu tempo é de 40ms.
+    \item Esse tempo de CPU que foi realmente usado pelo processo desde que ele iniciou é
+    chamado de \textbf{tempo virtual atual}. Com essa aproximação, o working set de um
+    processo são as páginas que foram referenciadas durante os últimos
+    \begin{math}\tau\end{math} segundos de tempo virtual.
+    \item Um algoritmo de substituição de páginas baseado em working sets usaria a 
+        idéia básica de encontrar uma página que não esteja no working set e 
+        removê-la. Como apenas páginas presentes em memória são candidatas a serem
+        removidas, págians que não estejam em memória são ignoradas por esse algoritmo.
+        Cada entrada contem pelo menos dois itens de informação: o tempo aproximado
+        que a página foi usada pela última vez e o bit R. Outros campos como o número
+        da moldura de página, os bits de proteçao e o bit M são desnecessários para esse
+        algoritmo.
+    \item O algoritmo funciona da seguinte forma:
+        \begin{itemize}
+            \item Assume-se que o hardware seta os bits R e M.
+            \item Assume-se que uma interrupção periódica de clock faz com que software
+                limpe o bit R a cada ciclo de relógio.
+            \item A cada page fault, a tabela de páginas é escaneada para procurar uma
+                página apropriada para ser removida.
+            \item O bit R de cada entrada é examinado. Se for 1, o tempo virtual atual é 
+                escrito no campo "tempo do ultimo uso" na tabela de páginas, indicando 
+                que a página estava sendo usada quando a falta ocorreu. 
+            \item Como a página foi referenciada durante esse ciclo de clock, ela
+                faz parte do working set e não é um candidato a ser removido.
+            \item Se R for 0, a página não foi referenciada durante o ciclo de clock
+                atual e pode ser um candidato a ser removido. Para decidir se é removida
+                ou não, sua idade (o tempo virtual atual menos o tempo de último uso)
+                é computada e comparada com \begin{math}\tau\end{math}.
+            \item Se a idade for maior que \begin{math}\tau\end{math}, a página não faz
+                mais parte do working set, e é substituída. As outras páginas são 
+                atualizadas em seguida. Porém, se R for 0 mas a idade for menor ou
+                igual a \begin{math}\tau\end{math}, a página ainda faz parte do
+                working set e é temporariamente mantida. Porém, a página que tiver
+                a maior idade é anotada. Se a tabela inteira for percorrida sem encontrar
+                um candidato para remover, isso significa que todas as páginas são parte
+                do working set. Nesse caso, se uma ou mais páginas com R = 0 foram encontradas,
+                a página que tiver a maior idade é removida. 
+            \item No pior cenário, todas as páginas tem R = 1, e nesse caso a escolha é 
+                aleatória, preferindo uma página limpa, se existir.
+        \end{itemize}
+\end{itemize}
+\subsubsection{Algoritmo WSClock}
+\begin{itemize}
+    \item O \textbf{WSClock} é um algoritmo baseado no algoritmo do relógio, mas que usa
+        as informações de working set. Devido à sua simplicidade de implementação e 
+        performance, é altamente usado na prática.
+    \item A estrutura de dados usada é uma lista cirular de molduras de página, assim
+        como no algoritmo do relógio. Inicialmente, essa lista está vazia. Quando a primeira
+        página é carregada, ela é adicionada a lista, e assim sucessivamente, formando um 
+        círculo.
+    \item Cada entrada possui os campos \textit{tempo de último uso}, bit \textit{R}
+        e bit \textit{M}. 
+    \item Assim como no algoritmo do relógio, a cada page fault a página apontada pelo
+        ponteiro do relógio é examinada primeiro. Se o bit R for 1, a pagina foi usada
+        durante o ultimo ciclo de clock e por isso não é uma boa candidata a ser removida.
+        O bit R é então resetado para 0 e o ponteiro avança para a próxima página, repetindo
+        o procedimento. 
+    \item Se a página tem R=0, a idade dela for maior que \begin{math}\tau\end{math} e a 
+        página está limpa, então ela não faz parte do working set e possui uma cópia válida
+        em disco, sendo substituida imediatamente. Caso a página esteja suja, ela não pode
+        ser removida imediatamente pois precisa ser copiada para o disco. Para evitar que 
+        o processo seja trocado, essa escrita em disco é agendada para mais tarde, mas
+        o ponteiro simplesmente avança e o algoritmo continua procurando uma página velha
+        e limpa que possa ser usada imediatamente.
+    \item É possível que todas as páginas sejam agendadas para escrita em disco em uma única
+        "passada" no relógio. Para reduzir utilização de disco, um limite pode ser estabelecido,
+        permitindo um máximo de \textit{n} páginas agendadas para escrita. Após esse limite
+        ser atingido, mais nenhuma escrita seria permitida. 
+    \item Se o ponteiro der uma volta completa e voltar ao seu ponto inicial, duas situações
+        podem ter ocorrido:
+    \begin{enumerate}
+        \item Pelo menos uma escrita foi agendada. Nesse caso, o ponteiro simplesmetne continua
+            rodando, pois se pelo menos uma escrita foi agendada, ela eventualmente será 
+            realizada, e assim uma página limpa estará disponivel para ser substituída.
+        \item Nenhuma escrita foi agendada. Nesse caso, todas as páginas pertencem ao working
+            set. Então, procura-se qualquer página limpa para subsituir. Caso nenhuma exista,
+            a página atual é substituída.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Segmentação}
+\begin{itemize}
+    \item Na paginação, memória virtual é unidimensional, e o endereço virtual vai de 
+        0 até algum endereço máximo.
+    \item Ter 2 ou mais espaços de endereçamento separados pode ser vantajoso, pois
+        programas possuem regiões de código, dados, pilha, etc, que podem ser realocados
+        mais facilmente na memória.
+    \item Na segmentação, o espaço de endereçamento do processo é dividido em segmentos,
+        que são blocos de endereços contíguos completamente independentes de tamanho 
+        variável (ex.: segmento de dados, código, pilha).
+    \item O SO mantém uma tabela de segmentos para cada processo, a qual relaciona a 
+        memória virtual do processo com a memória física do computador. 
+    \item Essa tabela contém o número do segmento, endereço físico inicial do segmento
+        e o tamanho do segmento.
+    \item Endereços são divididos em 2 partes: número do segmento e deslocamento
+        dentro do segmento.
+    \item O endereço físico é obtido somando base + deslocamento.
+    \item A tabela de segmentos é armazenada na memória RAM do computador, com 
+        registradores guardando os endereços base e limite da tabela de segmentos.
+    \item Quando ocorrem trocas de contexto, é necessário recuperar valores dos registradores
+        armazenados no descritor de processo.
+    \item Vantagens em relação à paginação:
+        \begin{itemize}
+            \item Tamanho variável: fácil de gerenciar estruturas de dados que crescem
+                ou diminuem de tamanho
+            \item Ligação de métodos/funções compilados separadamente é muito simplificada,
+                pois o ponto de entrada é sempre o mesmo: endereço 0.
+            \item Lovre de fragmentação interna
+            \item Fácil de compartilhar memória.
+        \end{itemize}
+    \item Desvantagens:
+    \begin{itemize}
+        \item Fragmentação externa: espaço desperdiçado entre segmentos
+        \item Inconveniente manter segmentos muito grandes em memória
+    \end{itemize}
+\end{itemize}
+\subsubsection{Segmentação paginada}
+\begin{itemize}
+    \item Oferece vantagens das técnicas de paginação e segmentação, resolvendo o problema
+        de manter em memória segmentos muito grandes.
+    \item Utiliza-se uma tabela de segmentos, que aponta para tabelas de páginas dos
+        diferentes segmentos.
+    \item O endereço virtual consiste de um número do segmento, um número de página virtual
+        e um deslocamento.
+    \item O número do segmento endereça a tabela de segmentos. O valor encontrado na tabela
+        de segmentos aponta para a tabela de páginas apropriada, que é endereçada pelo
+        número de página virtual do endereço virtual. Nessa tabela de páginas se encontra
+        o número da moldura de página, que é concatenado com o deslocamento para gerar
+        o endereço físico.
+\end{itemize}
 \end{document}
