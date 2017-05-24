@@ -1,0 +1,131 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{comment} 
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+ }
+\setlength{\parindent}{4em}
+\setlength{\parskip}{1em}
+\renewcommand{\baselinestretch}{1.2}
+
+\title{Resumo Prova 2 Estatística}
+\author{Guilherme Christopher Michaelsen Cardoso}
+\date{\today}
+
+\begin{document}
+\maketitle
+\abstract{Probabilidade. Variáveis aleatórias discretas. Variáveis aleatórias contínuas.  Distribuições
+    amostrais e estimação de parâmetros.}
+\section{Probabilidade}
+\par Iniciamos o estudo dos processos que envolvem variabilidade, aleatoriedade ou incerteza, 
+construindo modelos matemáticos para facilitar a análise. Esses modelos normalmente 
+são construídos à partir de suposições sobre o processo, mas também podem se basear
+em dados observados no passado.
+
+\par Pessoas costumam tomar decisões em função dos fatos que têm maior probabilidade de ocorrer, como
+por exemplo:
+
+\begin{itemize}
+    \item Se o céu está nublado, então há chance considerável de chover.
+    \item Se um inspetor de qualidade está observando as peças produzidas por uma máquina, e 
+        verifica que elas estão saindo fora do padrão, então é provável que a máquina continue
+        produzindo peças fora do padrão.
+    \item Se em uma determinada família há recorrência de problemas cardíacos, existe chance
+        maior de pessoas daquela família serem afetadas, portanto, exames preventivos devem
+        ser feitos com frequência.
+\end{itemize}
+
+\par Outro aspecto é a incerteza inerente às decisões que podem ser tomadas sobre determinado problema.
+Nos exemplos anteriores, mesmo que o céu esteja nublado, existe a chance de não chover. A máquina pode
+estar funcionando bem, e as peças fora do padrão podem ter sido produzidas por eventos casuais, etc.
+
+\par A possibilidade de quantificar a incerteza associada a cada fato permite tomar decisões mais
+eficientes. A teoria do cálculo de probabilidades permite obter uma quantificação da incerteza associada
+a um ou mais fatos. 
+
+\par Os modelos \textit{probabilísticos} são aplicados em situações que envolvem algum tipo de
+\textit{incerteza} ou \textit{variabilidade}, por exemplo, na presença de algum experimento aleatório.
+
+\par São exemplos de experimentos aleatórios:
+\begin{itemize}
+    \item Lançamento de um dado honesto (não viciado) e observação da face voltada para cima.
+    \item Observação dos diâmetros, em mm, dos eixos produzidos em uma metalúrgica
+    \item Número de mensagens transmitidas corretamente por dia em uma rede de computadores.
+\end{itemize}
+
+\par Nos casos em que os possíveis resultados de um experimento aleatório podem ser listados,
+um \textbf{modelo probabilístico} pode ser entendido como a listagem desses resultados, acompanhados
+de suas respectivas probabilidades.
+
+\subsection{Espaço amostral e eventos}
+
+\begin{itemize}
+    \item O conjunto de \textit{todos} os possíveis resultados do experimento é chamado de espaço 
+    amostral e é denotado pela letra grega \begin{math} \Omega \end{math}.
+\end{itemize}
+
+\textbf{Exemplos de experimentos aleatórios e seus espaços amostrais:}
+\begin{enumerate}
+    \item Lançamento de um dado e observação da face voltada para cima:
+        \begin{math} \Omega = \{1,2,3,4,5,6\} \end{math}
+    \item Sacada de carta num baralho comum (52 cartas) e observação do naipe:
+        \begin{math} \Omega = \{copas, espadas, ouros, paus\} \end{math}
+    \item Número de mensagens transmitidas corretamente por dia em uma rede de computadores:
+        \begin{math} \Omega = \{0,1,2,3,...\} \end{math}
+    \item Observação do diâmetro, em mm, de um eixo produzido em uma metalúrgica:
+        \begin{math} \Omega = \{d, \end{math} tal que \begin{math} d > 0\} \end{math} 
+\end{enumerate}
+
+\par O espaço amostral pode ser:
+\begin{itemize}
+    \item Finito, formado por um número limitado de resultados possíveis (casos 1 e 2)
+    \item Infinito enumerável, formado por um número infinito de resultados os quais
+        podem ser listados (caso 3)
+    \item Infinito, formado por intervalos de números reais (caso 4).
+\end{itemize}
+
+\par Um espaço amostral é dito \textbf{discreto} quando for finito ou infinito enumerável
+e contínuo quando é formado por intervalos de números reais.
+
+\par Chamamos de \textbf{evento} qualquer subconjunto do espaço amostral.
+\begin{math} A \end{math} é um evento \begin{math} \iff A \subseteq \Omega \end{math}
+
+\par Exemplo: seja o esperimento do lançamento de um dado, com 
+    \begin{math}\Omega = \{1,2,3,4,5,6\}\end{math}.\\ São exemplos de eventos:
+\begin{itemize}
+    \item A = número par do dado = \{2,4,6\}
+    \item B = número maior que 2 do dado = \{3,4,5,6\}
+    \item C = número 6 = \{6\}
+\end{itemize}
+    \par Como um evento é um subconjunto do espaço amostral, então todos os conceitos
+    de teoria de conjuntos podem ser aplicados a eventos. (união, intersecção, complementar).
+    \par Dois eventos são ditos \textbf{mutualmente exclusivos} se, e somente se, eles não
+    puderem ocorrer, isto é, se \begin{math}A \cap B = \emptyset \end{math}.
+\subsection{Definições de probabilidade}
+\subsubsection{Definição clássica de probabilidade}
+\par Se um experimento aleatório tem \begin{math}n\end{math} resultados \textit{igualmente}
+    prováveis e \begin{math}n_A\end{math} desses resultados pertencem a certo evento A, então
+    a probabilidade de ocorrência do evento A será:
+    \begin{displaymath}
+        P(A) = \frac{n_A}{n}
+    \end{displaymath}
+\subsubsection{Definição experimental de probabilidade}
+\par Seja um experimento aleatório com espaço amostral \begin{math}\Omega\end{math} e um 
+    evento A de interesse. Suponha que o experimento seja repetido n vezes e o evento A
+    ocorreu n(a) vezes. A frequência relativa do evento A é dada por:
+    \begin{displaymath}
+        f(a) = \frac{n(A)}{n}
+    \end{displaymath}
+    À medida que o experimento é repetido mais vezes, sob as mesmas condições,
+    a frequência relativa do evento A tenderá a ficar cada vez mais próxima
+    da probabilidade de ocorrência do evento A. Mais especificamente:
+    \begin{displaymath}
+        P(A) = \lim_{n \to \infty} f(a) = \lim_{n \to \infty} \frac{n(A)}{n}
+    \end{displaymath}
+\end{document}
