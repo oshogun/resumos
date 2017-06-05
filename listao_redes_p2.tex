@@ -280,11 +280,18 @@
     and infrastructure layers) da arquitetura PCMONS (Private Cloud Monitoring
     System).
 
+
+
     \item Descreva sucintamente as atividades relacionadas ao projeto e desenvolvimento
     de protocolos (especificação informal, especificação formal, validação, 
     verificação, implementação e teeste) descrevendo as relações existentes entre estas
     atividades. Para explicitar melhor, apresente também um desenho destas atividades e
-    relações \textbf{(não, não apresento, vsf)}.
+    relações 
+
+    \begin{enumerate}
+        \item \textbf{Especificação informal:} Especificação inicial do protocolo,
+
+    \end{enumerate}
 
     \item Observe a especificação através de modelos de transição [MEF (Maquina 
     de Estados Finitos)] realizada abaixo para o protocolo de enlace de dados entre
@@ -336,13 +343,38 @@
     Access with Collision Detection) para barramento (apresente um fluxograma),
     IEEE 802.4 - "token bus" e IEEE 802.5 - "token ring".
 
-    \item O que é chaveamento de pacotes e de circuitos? Comente sobre as vantagens
-    de cada tipo de chaveamento.
+    \item \textbf{O que é chaveamento de pacotes e de circuitos? Comente sobre as 
+    vantagens de cada tipo de chaveamento.}
+    \begin{itemize}
+        \item Chaveamento de pacotes: Mensagem dividida em pequenos pacotes
+        que são enviados da origem ao destino, apssando por roteadores intermediários.
+        Os caminhos a serem percorridos dependem do "controle de congestionamento".
+        \item Chaveamento de circuitos: Nesse caso teremos um único caminho a ser
+        percorrido por todos os pacotes. Para isso, devemos alocar "circuitos" entre
+        osroteadores, ou "comutadores", escolhendo o "circuito" mais adequado em
+        conformidade com os parâmetros de qualidade de serviço desejados.
+    \end{itemize}
+
+    \textbf{Vantagens: } NO CP temos que considerar o melhor esforço (best effort),
+    que oferece baixo custo. No CC temos qualidade de serviço garantida, conforme
+    desejado (solicitado).
+    \textbf{Desvantagens: } No CP, com melhor esforço, a qualidade de serivço fica
+    prejudicada a medida que o tráfego aumenta. No CC devemos "pagar" para ter
+    a a garantia de seviços desejada.
 
     \item Ainda em relação a camada de rede comente sobre: roteamento, controle de 
     congestionamento, serviço não orientado e orientado a conexões. 
 
     \item Quantas redes estão disponíveis e quantos computadores podemos interconectar
     em cada classe de endereço (IPv4) da Internet?
+    
+    \textbf{Classe A}: \begin{math}2^7 - 2  = 126 \end{math} redes e 
+    \begin{math}2^{24} - 2 = 16777214 \end{math} dispositivos.
+    
+    \textbf{Classe B}: \begin{math}2^{14} = 16384 \end{math} redes e 
+    \begin{math}2^{16} - 2 = 5534\end{math} dispositivos.
+    
+    \textbf{Classe C:} \begin{math}2^{21} = 2097152 \end{math} redes e 
+    \begin{math}2^8 - 2  = 254 \end{math}
 \end{enumerate}
 \end{document}
