@@ -63,7 +63,43 @@
     \begin{itemize}
         \item Na verdade existem mais operações, mas essas duas poderiam, em princípio,
         resolver o problema do armazenamento à longo prazo.
+        \item Na realidade, essas são operações muito inconvenientes, especialmente
+        em sistemas grandes usado por muitas aplicações e, possivelmente, por muitos
+        usuários (por exemplo, em um servidor). Alguns problemas que surgem são:
+        \begin{enumerate}
+            \item Como encontrar informação?
+            \item Como garantir que um usuário não leia os dados de outro?
+            \item Como saber quais blocos estão livres?
+        \end{enumerate}
+        e existem muito mais.
     \end{itemize}
+    \item Da mesma forma que o SO abstraiu o conceito do processador para criar o 
+    conceito do processo, e abstraiu o conceito da memória física para oferecer
+    a processos espaços de endereçamento virtuais, os problemas relacionados a disco
+    podem ser resolvidos com uma nova abstração: \textbf{o arquivo}. 
+    \begin{itemize}
+        \item Esses três conceitos (processos, espaços de endereçamento e arquivos)
+        são os mais importantes em Sistemas Operacionais.
+    \end{itemize}
+    \item \textbf{Arquivos} são unidades lógicas de informação criadas pelos processos.
+    Um disco normalmente contém milhares ou até mesmo milhões deles, cada um 
+    independente dos outros. Assim como os espaços de endereçamento modelam a RAM,
+    arquivos modelam o disco.
+    \item Processos podem ler arquivos existentes e criar novos arquivos de acordo com 
+    a necessidade. Informação armazenada em arquivos deve ser persistente, isto é, não
+    pode ser afetatda pela criação e término dos processos. Um arquivo deve desaparecer
+    apenas quando seu usuário explicitamente o remove. Apesar de operações de leitura
+    e escrita de arquivos serem as mais comuns, existem muitas outras.
+    \item Arquivos são gerenciados pelo sistema operacional. A forma em que eles são
+    estruturados, nomeados, acessados, usados, protegidos, implementados e gerenciados
+    são tópicos importantes em design de sistemas operacionais. A parte do SO que lida
+    com arquivos é chamada de \textbf{sistema de arquivos}.
 \end{itemize}
+\subsection{Arquivos}
+\abstract{Nessa subseção, observa-se os arquivos do ponto de vista do usuário,
+isto é, como eles serão usados e quais propriedades eles terão.}
+\subsubsection{Nomeação de Arquivos}
+\par Lorem ipsum dolor sit amet presuntum queijum abaj duwang shogun kakarotto
+sugoi desu ne nani rabusekku
 
 \end{document}
