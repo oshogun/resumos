@@ -1,0 +1,69 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{comment} 
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+ }
+\setlength{\parindent}{4em}
+\setlength{\parskip}{1em}
+\renewcommand{\baselinestretch}{1.2}
+
+\title{Resumo Prova 3 SO}
+\author{Guilherme Christopher Michaelsen Cardoso}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Sistemas de Arquivos}
+\begin{itemize}
+    \item Programas de computador precisam armazenar e recuperar informação.
+    \begin{itemize}
+        \item Quando um processo está rodando, ele pode armazenar uma quantidade
+        limitada de informação dentro do seu próprio espaço de endereçamento.
+        \item Porém, a capacidade desse armazenamento está limitada ao tamanho
+        do espaço de endereçamento virtual. 
+        \item Para alguns programas, esse tamanho é adequado; para outros, é muito
+        pequeno.
+        \item Outro problema de se utilizar o espaço de enderaçmento virtual é
+        que ao encerrar o processo, a informação é perdida. Para muitas aplicações,
+        a informação deve ser retida por semanas, meses, ou mesmo para sempre. 
+        Não se aceita que essa informação desapareça quando um processo termina ou
+        sofre um \textit{crash}.
+        \item O terceiro problema é que frequentimente é necessário que múltiplos
+        processos acessem partes da informação ao mesmo tempo. Por isso, a informação
+        deve ser independente dos processos.
+    \end{itemize}
+    \item Assim, surgem 3 requisitos essenciais para armazenamento de informação à 
+    longo prazo:
+    \begin{enumerate}
+        \item Deve ser possivel armazenar uma quantidade muito grande de informação
+        \item A informação deve sobreviver ao término do processo que a está utilizando
+        \item Múltiplos processos devem ser capazes de acessar a informação de uma vez.
+    \end{enumerate}
+    \item Dispositivos comuns de armazenamento não-volátil incluem:
+    \begin{enumerate}
+        \item Discos magnéticos
+        \item SSDs (não possuem partes móveis que podem quebrar, oferecem acesso rápido)
+        \item Fitas e discos ópticos (usados tipicamente para backup devido a sua baixa
+        performance).
+    \end{enumerate}
+    \item Pode-se pensar no disco como sendo uma sequência linear de blocos de tamanho
+    fixo, capazes de suportar duas operações:
+    \begin{enumerate}
+        \item Ler o bloco \textit{k}
+        \item Escrever no bloco \textit{k}
+    \end{enumerate}
+    \begin{itemize}
+        \item Na verdade existem mais operações, mas essas duas poderiam, em princípio,
+        resolver o problema do armazenamento à longo prazo.
+    \end{itemize}
+\end{itemize}
+
+\end{document}
