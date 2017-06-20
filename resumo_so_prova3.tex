@@ -99,7 +99,141 @@
 \abstract{Nessa subseção, observa-se os arquivos do ponto de vista do usuário,
 isto é, como eles serão usados e quais propriedades eles terão.}
 \subsubsection{Nomeação de Arquivos}
-\par Lorem ipsum dolor sit amet presuntum queijum abaj duwang shogun kakarotto
-sugoi desu ne nani rabusekku
+\begin{itemize}
+    \item Um arquivo é um mecanismo de abstração, que provê uma forma de armazenar
+    informação no disco e recuperá-la depois. 
+    \begin{itemize}
+        \item Isso deve ocorrer de forma a esconder do usuário os detalhes sobre como
+        e onde essa informação é armazenada, e como os discos funcionam.
+    \end{itemize}
+    \item Quando um processo cria um arquivo, ele dá a esse arquivo um nome.
+    \begin{itemize}
+        \item Quando o processo termina, esse arquivo continua a existir e pode ser acessado
+        por outros processos usando seu nome.
+    \end{itemize}
+    \item As regras para nomear arquivos variam de sistema para sistema.
+    \begin{itemize}
+        \item Todos os SOs atuais permitem strings de 1 a 8 letras como nome de arquivo.
+        \item Frequentemente digitos numéricos e caracteres especiais também são permitidos.
+        \item Muitos sistemas de arquivos suportam nomes longos de até 255 caracteres.
+        \item Alguns sistemas de arquivos realizam distinção entre letras maiúsculas
+        e minúsculas (UNIX, por exemplo), e outras não (MS-DOS, por exemplo).
+        \begin{itemize}
+            \item Um adendo sobre sistemas de arquivos: Tanto o Windows 95 quanto o 
+            Windows 98 usam o sistema de arquivos do DOS, chamado de \textbf{FAT-16},
+            herdando muitas de suas propriedades (como a construção de nomes de arquivos).
+            Windows 98 introduziu algumas extensões ao FAT-16, criando o \textbf{FAT-32},
+            mas esses dois são similares. As versões posteriores do Windows suportam os 
+            sistemas de arquivos FAT, que já são obsoletos, porém, esses sistemas já 
+            utilizam um sistema mais avançado (\textbf{NTFS}), que possui propriedades
+            diferentes (como nomes de arquivo em Unicode). No Windows 8 ainda existe um
+            segundo sistema de arquivos, chamado \textbf{ReFS}, mas esse é usado apenas
+            na versão para servidores. Nesse capítulo, ao mencionar aos sistemas de arquivos
+            do MS-DOS ou FAT, está se referenciando o uso dos sistemas FAT-16 e FAT-32 no 
+            Windows. Ainda existe um outro sistema baseado em FAT, conhecido como \textbf{exFAT},
+            que é uma extensão do FAT-32 otimizada para pendrives e sistemas de arquivos grandes.
+        \end{itemize}
+        \item Muitos sistemas operacionais suportam nomes de arquivos dividodos em duas partes,
+        separadas por um ponto (ex.: "prog.c"). A parte depois do ponto é chamada de 
+        \textbf{extensão de arquivo} e geralmente indica algo sobre o arquivo. No MS-DOS, por
+        exemplo, nomes de arquivos contém de 1 a 8 caracters, mais uma extensão adicional de
+        1 a 3 caracteres. No UNIX, o tamanho da extensão é definido pelo usuário, e um arquivo
+        pode ter até mesmo mais de uma extensão (exemplo homepage.html.zip).
+        \begin{itemize}
+            \item No caso do UNIX e alguns outros sistemas, as extensões de arquivo são apenas
+            convenções e não são obrigatórias pelo sistema operacional. Um arquivo chamado
+            file.txt pode ser algum tipo de arquivo de texto, mas o nome serve mais
+            para informar o usuário do que para prover qualquer informação para o computador.
+            Por outro lado, um compilador C pode exigir que os arquivos de entrada estejam 
+            com extensão .c, mas o SO não se importa.
+            \item Essas convenções são especialmente úteis quando o mesmo programa pode 
+            lidar com diversos tipos de arquivos.
+            \item Por outro lado, o Windows utiliza as extensões para identificar quais programas
+            são "donos" de cada extensão. Quando o usuário chama um arquivo, o SO invoca o programa
+            associado à sua extensão.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+\subsubsection{Estrutura de Arquivos}
+Arquivos podem ser estruturados de várias formas. Três possibilidades são comuns:
+\begin{enumerate}
+    \item Uma sequência não-estruturada de bytes. O SO não se preocupa com o que está no arquivo.
+    Tudo que ele vê são os bytes. Qualquer significado deve ser imposto pelos programas à nível de
+    usuário. Tanto o UNIX quanto o Windows usam essa aproximação. 
 
+    Fazer com que o SO considere os arquivos como nada mais do que sequências de bytes provê a 
+    maior flexibiliade. Programas de usuário podem colocar qualquer coisa em seus arquivos e nomeá-los
+    de qualquer forma que achar conveniente. O SO não ajuda, mas também não atrapalha. Para usuários
+    que querem fazer coisas incomuns, isso é muito importante. Todas as versões do UNIX (incluindo
+    Linux e OSX) e o Windows usam esse modelo de arquivos.
+
+    \item Uma sequência de records de tamanho fixo, cada um com uma estrutura interna. I idéia central
+    de um arquivo ser uma sequencia de records é a idéia de que a operação de leitura retorna um record
+    e a operação de escrita substitui ou acrescenta um record. Essa técnica era usada quando cartões perfurados
+    de 80 colunas eram comuns, e os SOs usavam arquivos que consistiam de records de 80 caracteres.
+
+    \item Uma árvore de records, não necessariamente todos do mesmo tamanho, cada um contendo um campo 
+    \textbf{chave} em uma posição fixa do record. Essa árvore é ordenada no campo chave, para permitir
+    a busca rápida de uma determinada chave. Esse tipo de arquivo é usado em computadores mainframe
+    para processamento de dados comerciais.
+\end{enumerate}
+
+\subsubsection{Tipos de Arquivos} 
+
+\begin{itemize}
+    \item Vários SOs suportam vários tipos de arquivos.
+    \item UNIX e Windows, por exemplo, possuem arquivos regulares e diretórios. O UNIX também possui 
+    arquivos especiais de caracteres e blocos. 
+    \begin{itemize}
+        \item \textbf{Arquivos regulares} contém informação de usuário. 
+        \item \textbf{Diretórios} são arquivos de sistema que mantém a estrutura do sistema de arquivos.
+        \item \textbf{Arquivos especiais de caracteres} são relacionados à entrada/saída e são usados
+        para modelar dispositivos seriais de I/O como terminais, impressoras e redes.
+        \item \textbf{Arquivos especiais de bloco} são usados para modelar discos.
+    \end{itemize}
+    \item Arquivos regulares geralmente são ASCII ou binários. Arquivos ASCII contém linhas de texto.
+    Em alguns sistemas, cada linha é terminada por um caractere de carriage return. Em outros, o caractere
+    de line feed é usado. Em alguns sistemas (e.g., Windows), ambos são usados. Linhas não precisam ser todas
+    do mesmo comprimento.
+    \item A grande vantagem de arquivos ASCII é que eles podem ser mostrados e impressos como são, e podem ser
+    editados com qualquer editor de texto. Além disso, se grandes números de programas usam arquvios ASCII 
+    para entrada e saída, é facil conectar a saída de um programa na entrada de outro (como nos pipelines
+    de shell).
+    \item Arquivos binários são aqueles que não são ASCII. Tentar imprimir seu conteúdo na tela geraria
+    um monte de lixo aleatório. Geralmente eles tem alguma estrutura interna conhecida apenas pelos programas
+    que os utilizam. 
+    \begin{itemize}
+        \item Um exemplo de arquivo binário seria um executável do UNIX. Apesar de tecnicamente ser apenas
+        uma sequência de bytes, o SO vai executar um arquivo apenas se el tiver um formato apropriado, com
+        cinco sessões: header, text, data, relocation bits e symbol tabe. O header começa com um 
+        \textbf{magic number} que identifica o arquivo como um executável (para impedir a execução acidental
+        de um arquivo que não esteja nesse formato), seguido pelos tamanhos das várias partes do arquivo, o
+        endereço no qual a execução começa, e alguns bits de flag. Em seguida estão os segmentos de texto e dados
+        do programa em si. Eles são carregados em memória e relocados usando os bits de relocação. A tabela de símbolos
+        é usada apenas para debug.
+        \item Outro exemplo seria um arquivo compactado, também do UNIX. Ele consiste de uma coleção de rotinas de 
+        bibliotecas compiladas mas não linkadas. Cada uma é prefaciada por um header contendo seu nome, data de criação,
+        dono, código de proteção, e tamanho.
+    \end{itemize}
+    \item Cada SO deve reconhecer pelo menos um tipo de arquivo: seu próprio arquivo executável. Alguns reconhecem mais.
+\end{itemize}
+
+\subsubsection{Acesso à Arquivos}
+\begin{itemize}
+    \item Sistemas operacionais antigos proviam apenas um tipo de acesso a arquivos: \textbf{acesso sequencial}. Nesse tipo
+    de sistema, um processo poderia ler todos os bytes ou records de um arquivo em orde, começando do começo, mas não poderia
+    pular bytes ou lê-los fora de ordem. Eles podiam ser rebobinados, para poder ser lidos quantas vezes necessários. Esses
+    arquivos eram convenientes pois o tipo de armazenamento usado era fita magnética, ao invés de disco.
+    \item Com a popularização dos discos para armazenamento de arquivos, tornou-se possível ler os bytes ou records de um 
+    arquivo fora de ordem, ou acessá-los por chave ao invés de posição. Esse tipo de acesso se chama \textbf{acesso aleatório},
+    e é necessário para muitas aplicações.
+\end{ìtemize}
+
+\subsubsection{Atributos de Arquivos}
+\begin{itemize}
+    \item Cada arquivo tem um nome e seus dados. Aĺém disso, todso os sistemas operacionais associam outras informações a cada
+    arquivo, como por exemplo a data e hora em que o arquivo foi modificado pela última vez e o tamanho do arquivo. Esses
+    itens a mais são chamados de \textbf{atributos} ou \textbf{metadados}. A lista de atributos varia consideravelmente
+    de sistema para sistema. Algumas possibilidades estão na tabela abaixo, mas existem outras.
+\end{itemize}
 \end{document}
