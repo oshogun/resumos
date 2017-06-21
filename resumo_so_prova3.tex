@@ -234,18 +234,35 @@ Arquivos podem ser estruturados de várias formas. Três possibilidades são com
     \item Cada arquivo tem um nome e seus dados. Aĺém disso, todso os sistemas operacionais associam outras informações a cada
     arquivo, como por exemplo a data e hora em que o arquivo foi modificado pela última vez e o tamanho do arquivo. Esses
     itens a mais são chamados de \textbf{atributos} ou \textbf{metadados}. A lista de atributos varia consideravelmente
-    de sistema para sistema. Algumas possibilidades estão na tabela abaixo, mas existem outras.
-    \begin{table}[]
+    de sistema para sistema. Algumas possibilidades restão na tabela abaixo, mas existem outras.
+    \begin{table}[!h]
         \centering
-        \caption{My caption}
-        \label{my-label}
+        \caption{Alguns possíveis atributos de arquivos}
+        \label{atributos_arquivos}
         \begin{tabular}{lllll}
-        \textbf{Atributo} & \textbf{Significado}                       &  &  &  \\
-        Proteção          & Quem pode acessar o arquivo e de que forma &  &  &  \\
-        Criador           & ID da pessoa que criou o arquivo           &  &  &  \\
-        Dono              & Dono atual                                 &  &  & 
+        \textbf{Atributo}       & \textbf{Significado}                                     &  &  &  \\
+        Proteção                & Quem pode acessar o arquivo e de que forma               &  &  &  \\
+        Criador                 & ID da pessoa que criou o arquivo                         &  &  &  \\
+        Dono                    & Dono atual                                               &  &  &  \\
+        Read-only flag          & 0 para read/write; 1 para read only                      &  &  &  \\
+        Hidden flag             & 0 para arquivos normais; 1 p/ arquivos ocultos           &  &  &  \\
+        System flag             & 0 p/ arquivos normais; 1 p/ arquivos do sistema          &  &  &  \\
+        Archive flag            & 0 p/ possui backup; 1 p/ precisa de backup               &  &  &  \\
+        ASCII/Binary flag       & 0 p/ arquivo ASCII; 1 p/ arquivo binário                 &  &  &  \\
+        Random Access flag      & 0 p/ acesso sequencial; 1 p/ acesso aleatório            &  &  &  \\
+        Temporary flag          & 0 p/ normal; 1 p/ deletar arquivo ao encerrar processo.  &  &  &  \\
+        Lock flags              & 0 p/ unlocked; nonzero p/ locked                         &  &  &  \\
+        Record length           & Número de bytes num record                               &  &  &  \\
+        Key position            & Offset da chave dentro de cada record                    &  &  &  \\
+        Key length              & Número de bytes no campo chave                           &  &  &  \\
+        Creation time           & Data/hora da criação do arquivo                          &  &  &  \\
+        Time of last access     & Data/hora em que o arquivo foi acessado por ultimo       &  &  &  \\
+        Time of last change     & Data/hora da última modificação do arquivo               &  &  &  \\
+        Current size            & Número de bytes em um arquivo                            &  &  &  \\
+        Maximum size            & Tamanho máximo que o arquivo pode atingir                &  &  &  \\
         \end{tabular}
     \end{table}
+    \
 
 \end{itemize}
 \end{document}
