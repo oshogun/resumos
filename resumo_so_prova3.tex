@@ -4,6 +4,7 @@
 \usepackage[brazilian]{babel}
 \usepackage{comment} 
 \usepackage{geometry}
+\usepackage{listings}
 \geometry{
     a4paper,
     total={170mm,257mm},
@@ -19,6 +20,7 @@
 \date{\today}
 
 \begin{document}
+\lstset{language=C}
 \maketitle
 
 \section{Sistemas de Arquivos}
@@ -234,11 +236,11 @@ Arquivos podem ser estruturados de várias formas. Três possibilidades são com
     \item Cada arquivo tem um nome e seus dados. Aĺém disso, todso os sistemas operacionais associam outras informações a cada
     arquivo, como por exemplo a data e hora em que o arquivo foi modificado pela última vez e o tamanho do arquivo. Esses
     itens a mais são chamados de \textbf{atributos} ou \textbf{metadados}. A lista de atributos varia consideravelmente
-    de sistema para sistema. Algumas possibilidades restão na tabela abaixo, mas existem outras.
-    \begin{table}[!h]
+    de sistema para sistema. Algumas possibilidades restão na tabela 1, mas existem outras.
+    \begin{table}[!ht]
         \centering
         \caption{Alguns possíveis atributos de arquivos}
-        \label{atributos_arquivos}
+        \label{atributos}
         \begin{tabular}{lllll}
         \textbf{Atributo}       & \textbf{Significado}                                     &  &  &  \\
         Proteção                & Quem pode acessar o arquivo e de que forma               &  &  &  \\
@@ -265,4 +267,293 @@ Arquivos podem ser estruturados de várias formas. Três possibilidades são com
     \
 
 \end{itemize}
+
+\subsubsection{Operações com arquivos}
+Arquivos existem para armazenar informações e permitir que sejam lidas posteriormente. Sistemas 
+diferentes provêm operações diferentes para permitir armazenamento e recuperação. As chamadas
+de sistemas mais comuns relacionadas a arquivos são:
+\begin{enumerate}
+    \item Create: O arquivo é criado sem dados. O propósito dessa chamada é anunciar que o arquivo
+    está chegando e definir alguns de seus atributos.
+    \item Delete: Quando o arquivo não é mais necessário, ele deve ser excluído para liberar
+    espaço em disco. Existe sempre uma syscall para esse propósito.
+    \item Open: Antes de usar um arquivo, o processo deve abri-lo. O propósito da chamada open
+    é permitir que o sistema busque os atributos e uma lista de endereços no disco na memória
+    principal para acesso rápido em chamadas posteriores.
+    \item Close: Quando todos os processos são encerrados, os atributos e endereços de disco
+    não são mais necessários, então o arquivo deve ser fechado para liberar espaço interno na 
+    tabela. Muitos sistemas encorajam isso impondo um número máximo de arquivos abertos em
+    processos. Um disco é escrito em blocos, e fechar um arquivo força a escrita do último bloco
+    do arquvio, mesmo que esse bloco não esteja completamente cheio.
+    \item Read: Dados são lidos do arquivo. Geralmente, os bytes vem da posição atual. O chamador
+    deve especificar quantos dados são necessários e deve também prover um buffer que irá contê-los.
+    \item Write: Dados são escritos novamente no arquivo, geralmente na posição atual. Se a posição atual
+    é no final do arquivo, o tamanho do arquivo aumenta. Se a posição atual é no meio do arquivo, dados
+    existentes são sobrescritos e perdidos para sempre.
+    \item Append: essa chamada é uma forma restrita de escrita. Ela pode adicionar dados apenas ao final
+    do arquivo. Ssistemas que provêm um número mínimo de chamadas de sistema raramente tem o append, mas
+    muitos sistemas tem várias formas de fazer a mesma coisa, e esses sistemas frequentemente possuem o
+    append.
+    \item Seek: Para arquivos de acesso aleatorio, um método é necessário para epsecificar de onde buscar
+    os dados. Uma forma comum é a chamada seek, que reposiciona o ponteiro do arquivo para um lugar específico
+    nesse arquivo. Após essa chamada ser concluída, dados podem ser lidos ou escritos naquela posição.
+    \item Get attributes: Processos frequentemente precisam ler atributos dos arquivos para fazer seu trabalho.
+    Por exemplo, o programa \textit{make} do UNIX, ao ser chamado, examina as datas/horas de modificação de todso
+    os arquivos fonte e objetos e busca fazer o mínimo de compilações necessárias para manter o projeto atualizado.
+    \item Set attributes: Alguns atributos podem ser modificados após a criação do arquivo. Essa chamada de sistema
+    possibilita isso.
+    \item Rename: Frequentemente, um usuário precisa mudar o nome de um arquivo existente. Essa chamada de sistema 
+    permite isso. Não é sempre necessário que ela exista, pois o arquivo pode ser copiado para um novo arquivo com
+    o novo nome, e depois o arquivo antigo é excluído.
+\end{enumerate}
+
+\subsubsection{Exemplo de Programa usando Chamadas de Sistema de Arquivos}
+\begin{lstlisting}
+/* copyfile.c */
+/* File copy program. Error checking and reporting is minimal. */
+
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char *argv[]); /* ANSI Prototype */
+
+#define BUF_SIZE 4096             /* use a buffer size of 4096 bytes */
+#define OUTPUT_MODE 0700          /* protection bits for output file */
+
+int main(int argc, char *argv[])
+{
+    int in_fd, out_d, rd_count, wt_count;
+
+    if (argc != 3) exit(1);       /* syntax error if argc is not 3 */
+
+
+    /* Open the input file and create the output file */
+
+    in_fd = open(argv[1], O_RDONLY); /* open the source file */
+    if (in_fd < 0) exit(2);       /*if it cannot be opened, exit */
+    out_fd = creat(argv[2], OUTPUT_MODE); /* create the destination file */
+    if (out_fd < 0) exit(3);      /* if it cannot be created exit */
+
+    /* Copy loop */
+    while(1) {
+        rd\_count = read(in_fd, buffer, BUF_SIZE); /* read a block of data */
+        if (rd_count <= 0) break; /*if end of file or error, exit loop */
+        wt_count = write (out_fd, buffer, rd_count); /*write data*/
+        if (wt_count <= 0)exit(4);  /*wt_count <=0 is an error */
+    }
+    /* Close the files */
+    close(in_fd);
+    close(out_fd);
+    if (rd_count == 0)
+        exit(0);    /* no error on last read */
+    else
+        exit(5);    /* error on last read */
+}
+\end{lstlisting}
+ 
+ O programa, \textit{copyfile}, pode ser chamado, por exemplo, pela linha de comando
+ \begin{lstlisting}
+    copyfile abc xyz
+ \end{lstlisting}
+ para copiar o arquivo abc para xyz. Se o arquivo xyz já existe, será sobrescrito. 
+ Caso contrário, será criado. O programa deve ser chamado com exatamente dois argumentos,
+ ambos nomes aceitáveis de arquivos. O primeiro é o fonte, o segundo é o destino.
+
+ O primeiro \textit{\#define} define BUF\_SIZE para 4096. Esse valor será usado para determinar
+ que a leitura ocorrerá em chunks de 4096 bytes. O segundo \textit{\#define} determina quem
+ poderá acessar o arquivo de saída.
+
+ São necessários 3 parâmetros nesse programa: o primeiro é o próprio programa (./copyfile),
+ o segundo é o arquivo fonte, e o terceiro, o arquivo destino. Por isso, o programa checa
+ se recebeu exatamente 3 argumentos, caso contrário, encerra o programa.
+
+ Os valores de argv seriam, na chamada exemplo:
+
+ \begin{lstlisting}
+    argv[0] = "copyfile"
+    argv[1] = "abc"
+    argv[2] = "xyz"
+ \end{lstlisting}
+ É através desse array que o programa acessa seus argumentos.
+
+ Cinco variáveis são delcaradas. As variáveis \textit{in\_fd} e \textit{out\_fd}, vão
+ armazenar os \textbf{descritores de arquivos}, pequenos inteiros retornados quando 
+ um arquivo é aberto. As próximas duas \textit{rd\_count} e \textit{wt\_count}, são as
+ contagens de bytes retornadas pelas chamadas de systema read e write, respectivamente.
+ O último, \textit{buffer}, é o buffer usado para armazenar os dados lidos e suprir
+ os dados a serem escritos.
+
+ Após verificar se o número de argumentos está correto, o programa tenta abrir
+ o arquivo fonte e criar o arquivo destino. Se o arquivo fonte for aberto com 
+ sucesso, o sistema atribui um pequeno inteiro a \textit{in\_fd}, para identificar
+ o arquivo. Chamdas subsequentes devem incluir este inteiro para que o sistema
+ saiba qual arquivo ele está buscando. De forma similar, se o arquivo destino
+ for criado com sucesso, \textit{out\_fd} recebe um valor para identificar esse
+ arquivo. O segundo argumento para \textit{creat} define o modo de proteção. Se 
+ a abertura ou a criação do arquivo falharem, o descritor de arquivo correspondente
+ recebe -1 e o programa é encerrado com um código de erro.
+
+ Here come dat copy loop. O shit, waddup. Ele inicia tentando ler 4KB de dados
+ para o \textit{buffer}, chamando a rotina de biblioteca \textit{read}, que invoca
+ a chamada de sistema read. O primeiro parâmetro identifica o arquivo, o segundo passa
+ o buffer, e o terceiro diz quantos bytes devem ser lidos. O valor atribuido a
+ \textit{rd\_count} diz o número de bytes que realmente foram lidos. Normalmente, isso
+ será 4096, exceto se menos bytes estiverem restando no arquivo. Quando o fim do arquivo for
+ atingido, isso será zero. Se \textit{rd\_count} for zero ou negativo, a cópia não pode continuar,
+ então a chamada \textit{break} é executada para terminar o loop.
+
+ A chamada a \textit{write} salva o buffer no arquivo destino. O primeiro parâmetro identifica 
+ o arquivo, o segundo passa o buffer, e o terceiro diz quantos bytes serão escritos, de forma
+ análoga ao \textit{read}. Note que a contagem de bytes é o número de bytes realmente lidos, e
+ não \textit{BUF\_SIZE}. Isso é importante porque a última leitura não retornará 4096 à não ser
+ que o tamanho do arquivo seja, por ocasião, múltiplo de 4KB.
+
+ Quando o arquivo inteiro for processado, a primeira chamada após o final do arquivo retornará
+ 0 ao \textit{rd\_count}, o que fará o arquivo sair do loop. Nesse ponto, os dois arquivos são fechados
+ e o programa termina com um status indicando um término normal do arquivo. 
+
+ \subsection{Diretórios}
+
+ Para manter os arquivos organizados, os sistemas de arquivos normalmente usam \textbf{diretórios}
+ ou \textbf{pastas}, que são arquivos também. 
+
+ \subsubsection{Sistemas de diretório single-level}
+ A forma mais simples de um sistema de diretórios é ter um único diretório contendo todos os
+ arquivos, normalmente chamado de \textbf{root directory}. Esse sistema era comum em PCs antigos.
+
+ \subsubsection{Sistemas de diretório hierárquivos}
+ Para usuários modernos que trabalham com milhares de arquivos, encontrar qualquer coisa seria
+ impossível se todos os arquivos estivessem em um único diretório. Por isso, uma forma é necessária
+ para agrupar todos os arquivos relacionados. O que se precisa é de hirarquia (ou seja, uma árvore
+ de diretórios). Com essa aproximação, podem haver tantos diretorios quanto forem necessários para
+ agrupar os arquivos em formas naturais. Quase todos os sistemas de arquivos modernos são organizados
+ desta maneira.
+
+ \subsubsection{Nomes de caminho}
+ Quando o sistema de arquivos é organizado como uma árvore de diretórios, alguma forma é necessária
+ para especirficar os nomes dos arquivos. Dois métodos diferentes são comumente usados. No primeiro
+ método, cada arquivo recebe um \textbf{nome de caminho absoluto} consistindo do caminho desde o 
+ diretório raiz até o arquivo. Caminhos absolutos sempre começam no diretório root e são únicos.
+ No UNIX, os componentes do arquivo são separados por um /. 
+
+ O outro tipo de nome de caminho é o \textbf{nome de caminho relativo}. Esse é usado em conjunto
+ com o conceito de \textbf{diretório atual}. Um usuário pode designar um diretório como sendo
+ o diretório atual, nesse caso, todos os caminhos que não comecem a partir do diretório raiz são
+ relativos ao diretório atual. Por exemplo, se o diretório atual for \textit{/usr/ast}, então o 
+ arquivo cujo caminho absoluto é \textit{/usr/ast/mailbox} pode ser referenciado simplesmente como
+ \textit{mailbox}. Em outras palavras, o comando UNIX 
+ \begin{lstlisting}
+    cp /usr/ast/mailbox /usr/ast/mailbox.bak
+ \end{lstlisting}
+ e o comando 
+\begin{lstlisting}
+    cp mailbox mailbox.bak
+\end{lstlisting}
+fazem exatamente a mesma coisa, se o diretório atual for \textit{/usr/ast}. Em alguns casos,
+usar o diretório atual pode ser mais conveniente. Em outros casos, pode ser necessário saber
+o endereço absoluto de um arquivo a ser acessado, independente do diretório atual.
+
+Cada processo tem seu próprio diretório atual, então quando ele muda seu diretório atual e depois
+termina, nenhum outro processo é afetado e nenhum traço da mudança é deixado para trás no sistema
+de arquivos. Dessa forma, é sempre perfeitamente seguro para um processo mudar seu diretório atual
+sempre que achar conveniente. 
+
+Entretanto, se uma \textit{rotina de biblioteca} muda o diretório atual e não retorna ao original
+antes de terminar, o resto do programa pode não funcionar, já que o endereço atual pode não estar
+válido. Por isso, rotinas de biblioteca raramente mudam o diretório atual, e quando elas o fazem,
+sempre mudam de volta antes de retornar.
+
+Quase todos os sistemas operacionais que suportam uma hirarquia de diretórios possuem duas entradas
+especiais em todos os diretórios, "." e "..". "." se refere ao diretório atual, e ".." se refere ao
+diretório pai (exceto no diretório raiz, onde se refere a si mesmo).
+
+\subsubsection{Operações com diretórios}
+
+As chamadas de sistema permitidas para gerenciar diretórios exibem mais variação de sistema para
+sistema do que as chamadas de sistema para arquivos. Exemplo retirado do UNIX.
+\begin{enumerate}
+    \item Create: Um diretório é criado. Ele está vazio exceto por "." e "..", que são automaticamente
+    colocados lá pelo sistema (ou em alguns casos, pelo programa \textit{mkdir}).
+    \item Delete: Um diretório é excluído. Apenas um diretório vazio pode ser excluído. Um diretório contendo
+    apenas "." e ".." é considerado vazio, já que esses dois não podem ser excluídos.
+    \item Opendir: Diretórios podem ser lidos. Por exemplo, para listar todos os arquivos em um diretório, um 
+    programa de listagem abre o diretório para ler os nomes de todos os arquivos que ele contém. Antes que
+    um diretório possa ser lido, ele deve ser aberto, de forma análoga a abertura e leitura de um arquivo.
+    \item Closedir: Quando um diretório foi lido, ele deve ser fechado para liberar espaço interno na tabela.
+    \item Readdir: Essa chamada retorna a próxima entrada em um diretório aberto. Anteriormente, era possível ler
+    diretórios usando a system call read usual, mas essa chamada apresentava a desvantagem de forçar o programador
+    a lidar com a estrutura interna dos diretórios. Readdir sempre retorna uma entrada em um formato padrão, não
+    importanto qual das possíveis  estruturas de diretório esteja sendo usada.
+    \item Rename: Diretórios podem ser renomeados da mesma forma que arquivos.
+    \item Link: Uma técnica que permite que um arquivo apareça em mais de um diretório. Essa chamada de sistema
+    especifica um arquivo existente e um nome de caminho, e cria um link do arquivo existente ao nome especificado
+    eplo caminho. Dessa forma, o mesmo arquivo pode aparecer em muitos diretórios. Um link desse arquivo, que incrementa
+    o contador no inode do arquivo (para controlar quantas entradas de diretório contém o arquivo) é chamado de 
+    \textbf{hard link}.
+    \item Unlink: Uma entrada de diretório é removida. Se o arquivo a ser removido está somente presente em um diretório,
+    ele é removido do sistema de arquivos. Se está presente em múltiplos diretórios, apenas o caminho especificaod é removido,
+    e os outros permanecem. No UNIX, essa é a chamada de sistema usada para excluir arquivos.
+\end{enumerate}
+
+Uma variante na idéia de linkar arquivos é o \textbf{link simbólico}. Ao invés de fazer com que dois nomes apontem para a 
+mesma estrutura intenra de dados que representa um arquivo, um link simbólico cria um nome que aponta para um
+pequeno arquivo que nomeia outro arquivo. Quando o primeiro arquivo é usado, por exemplo, aberto,
+o  sistema de arquivos segue o caminho e encontra o nome no final. Então, ele começa o processo de busca
+usando o novo nome. Links simbólicos possuem a vantagem de poder cruzar barreiras entre discos e até
+mesmo apontar para arquivos em computadores remotos. Porém, sua implementação é menos eficiente
+que a de hard links.
+
+\subsection{Implementação de sistemas de arquivos}
+Saindo do ponto de vista de usuário, estuda-se agora a visão de um implementador. A preocupação
+do usuário se refere nos nomes de arquivos, operações possíveis sobre eles, estrutura dos 
+diretórios, etc. O implementador, por outro lado, precisa saber como os arquivos e diretórios são
+salvos, como o espaço em disco é armazenado, e como fazer tudo funcionar de forma eficiente e
+confiável.
+
+\subsubsection{Layout do Sistema de Arquivos}
+\item Sistemas de arquivos são armazenados em discos. A maioria dos discos pode ser divididos
+em uma ou mais partições, com sistemas de arquivos independentes em cada partição. O Setor 0
+do disco é chamado de \textbf{MBR (Master Boot Record)} e é usado para iniciar o computador.
+Ao final do MBR está a tabela de partições. Essa tabela contém os endereços e finais de cada
+partiçãso. Uma das partições na tabela é marcada como ativa. Quando o computador é bootado,
+a BIOS lê e executa a MBR. A primeira coisa que a MBR faz é procurar a partição ativa, ler
+seu primeiro bloco (que é chamado de \textbf{boot block}), e executá-lo. O programa no 
+boot block carrega o SO contido naquela partição. Para fins de uniformidade, cada partição
+começa com um boot block, mesmo que ela não contenha um sistema operacional bootavel. Ademais,
+ela pode conter um no futuro.
+
+Além de iniciar com um boot block, o layout de uma partição de disco varia muito entre os
+sistemas de arquivos. É comum que o sistema de arquivos contenha alguns dos seguintes itens:
+
+\begin{enumerate}
+    \item \textbf{Superblock}: Contém todos os parâmetros chave sobre o sistema de arquivos
+    e é lido para a memória quando o computador é bootado ou o sistema de arquivos é tocado
+    pela primeira vez. Informações típicas no superblock incluem um número mágico para 
+    identificar o tipo do sistema de arquivos, o número de blocos no sistema de 
+    arquivos, e outras informações administrativas chave.
+    \item Em seguida, podem existir informações a respeito dos blocos livres no sistema
+    de arquivos, por exemplo, na forma de um bitmap ou lista de ponteiros. 
+    \item Após isso, podem estar os i-nodes, um array de estruturas de dados, uma por arquivo,
+    que contém todas as informações sobre aquele arquivo.
+    \item Depois, pode estar o diretório raiz, que contém o topo da árvore do sistema de arquivos.
+    \item Finalmente, o restante da partição contém todos os outros diretórios e arquivos.
+\end{enumerate}
+
+\subsubsection{Implementação de arquivos}
+
+Provavelmente o problema mais importante em implementar armazenamento de arquivos é manter
+controle sobre quais blocos de disco vão para cada arquivo. Vários métodos são usados em 
+diferentes SOs.
+
+\begin{itemize}
+    \item \textbf{Alocação Contígua}
+    A forma de alocação mais simples é armazenar cada arquivo como uma série
+    contígua de blocos de disco. Portanto, em um disco com blocos de 1KB, um arquivo de 
+    50KB teria 50 blocos consecutivos alocados para seu uso. Com blocos de 2kb, teria 
+    25 blocos consecutivos.
+
+\end{itemize}
+
 \end{document}
